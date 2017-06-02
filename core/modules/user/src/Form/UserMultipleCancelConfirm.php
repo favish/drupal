@@ -2,6 +2,7 @@
 
 namespace Drupal\user\Form;
 
+use Drupal\User\RoleStorageInterface;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -37,6 +38,13 @@ class UserMultipleCancelConfirm extends ConfirmFormBase {
   protected $entityManager;
 
   /**
+   * The role storage used when changing the admin role.
+   *
+   * @var \Drupal\user\RoleStorageInterface
+   */
+  protected $roleStorage;
+
+  /**
    * Constructs a new UserMultipleCancelConfirm.
    *
    * @param \Drupal\user\PrivateTempStoreFactory $temp_store_factory
@@ -45,11 +53,14 @@ class UserMultipleCancelConfirm extends ConfirmFormBase {
    *   The user storage.
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
    *   The entity manager.
+   * @param \Drupal\user\RoleStorageInterface $role_storage
+   *   The role storage.
    */
-  public function __construct(PrivateTempStoreFactory $temp_store_factory, UserStorageInterface $user_storage, EntityManagerInterface $entity_manager) {
+  public function __construct(PrivateTempStoreFactory $temp_store_factory, UserStorageInterface $user_storage, EntityManagerInterface $entity_manager, RoleStorageInterface $role_storage) {
     $this->tempStoreFactory = $temp_store_factory;
     $this->userStorage = $user_storage;
     $this->entityManager = $entity_manager;
+    $this->roleStorage = $role_storage;
   }
 
   /**
@@ -59,7 +70,8 @@ class UserMultipleCancelConfirm extends ConfirmFormBase {
     return new static(
       $container->get('user.private_tempstore'),
       $container->get('entity.manager')->getStorage('user'),
-      $container->get('entity.manager')
+      $container->get('entity.manager'),
+      $container->get('entity.manager')->getStorage('user_role')
     );
   }
 
@@ -104,32 +116,32 @@ class UserMultipleCancelConfirm extends ConfirmFormBase {
       return $this->redirect('entity.user.collection');
     }
 
-    $root = NULL;
-    $names = [];
-    $form['accounts'] = ['#tree' => TRUE];
+    // Get the admin role.
+    $admin_roles = $this->roleStorage->getQuery()
+      ->condition('is_admin', TRUE)
+      ->execute();
+    $admin_role = reset($admin_roles);
+
+    // Count the admin users in this batch.
+    $deleted_admin_user_count = 0;
     foreach ($accounts as $account) {
-      $uid = $account->id();
-      $names[$uid] = $account->label();
-      $form['accounts'][$uid] = [
-        '#type' => 'hidden',
-        '#value' => $uid,
-      ];
+      if ($account->hasRole($admin_role)) {
+        $deleted_admin_user_count++;
+      }
     }
 
-    $form['account']['names'] = [
-      '#theme' => 'item_list',
-      '#items' => $names,
-    ];
+    // Get count of all users with admin role.
+    $ids = $this->userStorage->getQuery()
+      ->condition('roles', $admin_role)
+      ->execute();
+    $admin_user_count = count($ids);
 
-    // Output a notice that user 1 cannot be canceled.
-    if (isset($root)) {
-      $redirect = (count($accounts) == 1);
-      $message = $this->t('The user account %name cannot be canceled.', ['%name' => $root->label()]);
-      drupal_set_message($message, $redirect ? 'error' : 'warning');
+    // Prevent all/last user(s) with administrator role from being deleted.
+    if ($admin_user_count == $deleted_admin_user_count) {
+      $message = $this->t('This action cannot be completed, because it would cancel all administrator accounts.');
+      drupal_set_message($message, 'error');
       // If only user 1 was selected, redirect to the overview.
-      if ($redirect) {
-        return $this->redirect('entity.user.collection');
-      }
+      return $this->redirect('entity.user.collection');
     }
 
     $form['operation'] = ['#type' => 'hidden', '#value' => 'cancel'];
