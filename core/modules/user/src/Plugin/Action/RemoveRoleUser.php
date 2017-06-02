@@ -2,6 +2,8 @@
 
 namespace Drupal\user\Plugin\Action;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
+
 /**
  * Removes a role from a user.
  *
@@ -46,7 +48,11 @@ class RemoveRoleUser extends ChangeUserRoleBase {
     if($this->configuration['rid'] == $admin_role) {
 
       // Get count of all users with admin role.
-      $ids = $role_storage->getQuery()
+      $user_storage = \Drupal::getContainer()
+        ->get('entity.manager')
+        ->getStorage('user');
+
+      $ids = $user_storage->getQuery()
         ->condition('roles', $admin_role)
         ->execute();
 
@@ -59,15 +65,13 @@ class RemoveRoleUser extends ChangeUserRoleBase {
           $deleted_admin_user_count++;
         }
       }
-      print_r( $ids); die(); // . ":" . $deleted_admin_user_count);
-
 
       // Prevent all/last user(s) with administrator role from being deleted.
       if ($admin_user_count == $deleted_admin_user_count) {
         $message = $this->t('This action cannot be completed, because it would remove all accounts with the Administrator role.');
         drupal_set_message($message, 'error');
         // If only user 1 was selected, redirect to the overview.
-        return $this->redirect('entity.user.collection');
+        return new RedirectResponse(\Drupal::url('entity.user.collection'));
       }
     }
 
