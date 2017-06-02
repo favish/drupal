@@ -20,7 +20,9 @@ class RoleAccessControlHandler extends EntityAccessControlHandler {
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
     switch ($operation) {
       case 'delete':
-        if ($entity->id() == RoleInterface::ANONYMOUS_ID || $entity->id() == RoleInterface::AUTHENTICATED_ID) {
+        // Prevent deletion of special roles.
+        $perm_roles = array(RoleInterface::ANONYMOUS_ID, RoleInterface::AUTHENTICATED_ID, RoleInterface::ADMINISTRATOR_ID);
+        if (in_array($entity->id(), $perm_roles)) {
           return AccessResult::forbidden();
         }
 
