@@ -47,10 +47,6 @@ class UserPermissionsTest extends WebTestBase {
 
     $storage = $this->container->get('entity.manager')->getStorage('user_role');
 
-    // Create an additional role and mark it as admin role.
-    Role::create(['is_admin' => TRUE, 'id' => 'administrator', 'label' => 'Administrator'])->save();
-    $storage->resetCache();
-
     $this->drupalLogin($this->adminUser);
     $rid = $this->rid;
     $account = $this->adminUser;
@@ -96,8 +92,8 @@ class UserPermissionsTest extends WebTestBase {
     $this->drupalLogin($this->adminUser);
     $this->drupalGet('admin/config/people/accounts');
 
-    // Verify that the administration role is none by default.
-    $this->assertOptionSelected('edit-user-admin-role', '', 'Administration role defaults to none.');
+    // Verify that the administration role is 'administrator' by default.
+    $this->assertOptionSelected('edit-user-admin-role', 'administrator', 'Administration role defaults to none.');
 
     $this->assertFalse(Role::load($this->rid)->isAdmin());
 

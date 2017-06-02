@@ -34,10 +34,16 @@ class UserEntityTest extends KernelTestBase {
     $role_storage->create(['id' => 'test_role_two'])->save();
     $role_storage->create(['id' => 'test_role_three'])->save();
 
-    $values = [
-      'uid' => 1,
-      'roles' => ['test_role_one'],
-    ];
+    // Test that user 1 is no different than any regular authenticated user.
+    $user = User::create(['uid' => 1]);
+    $this->assertEqual([RoleInterface::AUTHENTICATED_ID], $user->getRoles());
+
+    // Test that a regular authenticated user gets the authenticated role.
+    $user = User::create(['uid' => 2]);
+    $this->assertEqual([RoleInterface::AUTHENTICATED_ID], $user->getRoles());
+
+    // Test role manipulation for an authenticated user.
+    $values = ['uid' => 3, 'roles' => ['test_role_one']];
     $user = User::create($values);
 
     $this->assertTrue($user->hasRole('test_role_one'));

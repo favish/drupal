@@ -5,6 +5,7 @@ namespace Drupal\Tests\system\Functional\Module;
 use Drupal\Core\Cache\Cache;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Entity\EntityMalformedException;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
 use Drupal\Tests\BrowserTestBase;
@@ -32,7 +33,8 @@ class UninstallTest extends BrowserTestBase {
     $this->container->get('module_installer')->uninstall(['module_test']);
 
     // Are the perms defined by module_test removed?
-    $this->assertFalse(user_roles(FALSE, 'module_test perm'), 'Permissions were all removed.');
+    $roles = array_diff_key(user_roles(FALSE, 'module_test perm'), [AccountInterface::ADMINISTRATOR_ROLE => 1]);
+    $this->assertFalse($roles, 'Permissions were all removed.');
   }
 
   /**

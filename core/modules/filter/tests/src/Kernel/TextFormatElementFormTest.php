@@ -44,15 +44,16 @@ class TextFormatElementFormTest extends KernelTestBase implements FormInterface 
     $manager = \Drupal::service('plugin.manager.element_info');
     $manager->clearCachedDefinitions();
     $manager->getDefinitions();
-    /* @var \Drupal\filter\FilterFormatInterface $filter_test_format */
-    $filter_test_format = FilterFormat::load('filter_test');
 
     /* @var \Drupal\user\RoleInterface $role */
     $role = Role::create([
       'id' => 'admin',
       'label' => 'admin',
     ]);
-    $role->grantPermission($filter_test_format->getPermissionName());
+    foreach (FilterFormat::loadMultiple(['full_html', 'filtered_html', 'filter_test']) as $format) {
+      /* @var \Drupal\filter\FilterFormatInterface $format */
+      $role->grantPermission($format->getPermissionName());
+    }
     $role->save();
     $this->testUser = User::create([
       'name' => 'foobar',

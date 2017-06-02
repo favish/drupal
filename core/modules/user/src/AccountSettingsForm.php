@@ -104,8 +104,8 @@ class AccountSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Administrator role'),
       '#open' => TRUE,
     ];
-    // Do not allow users to set the anonymous or authenticated user roles as the
-    // administrator role.
+    // Do not allow users to set the anonymous or authenticated user roles as
+    // the administrator role.
     $roles = user_role_names(TRUE);
     unset($roles[RoleInterface::AUTHENTICATED_ID]);
 

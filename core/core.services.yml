@@ -1476,7 +1476,7 @@ services:
     arguments: ['@current_user', '@session_handler.write_safe']
   user_permissions_hash_generator:
     class: Drupal\Core\Session\PermissionsHashGenerator
-    arguments: ['@private_key', '@cache.bootstrap', '@cache.static']
+    arguments: ['@private_key', '@cache.bootstrap', '@cache.static', '@entity_type.manager']
   current_user:
     class: Drupal\Core\Session\AccountProxy
   session_configuration:

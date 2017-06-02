@@ -6,6 +6,7 @@ use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\entity_test\Entity\EntityTest;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\views\Entity\View;
 use Drupal\Tests\views\Kernel\ViewsKernelTestBase;
@@ -87,10 +88,17 @@ class FieldRenderedEntityTest extends ViewsKernelTestBase {
       ])->save();
     }
 
+    Role::create([
+      'id' => 'test_role',
+      'label' => 'Can view test entities',
+      'permissions' => ['view test entity'],
+    ])->save();
     $this->user = User::create([
       'name' => 'test user',
+      'roles' => ['test_role'],
     ]);
     $this->user->save();
+    \Drupal::currentUser()->setAccount($this->user);
 
     parent::setUpFixtures();
   }
@@ -99,8 +107,6 @@ class FieldRenderedEntityTest extends ViewsKernelTestBase {
    * Tests the default rendered entity output.
    */
   public function testRenderedEntityWithoutField() {
-    \Drupal::currentUser()->setAccount($this->user);
-
     EntityViewDisplay::load('entity_test.entity_test.foobar')
       ->removeComponent('test_field')
       ->save();
@@ -167,8 +173,6 @@ class FieldRenderedEntityTest extends ViewsKernelTestBase {
    * Tests the rendered entity output with the test field configured to show.
    */
   public function testRenderedEntityWithField() {
-    \Drupal::currentUser()->setAccount($this->user);
-
     // Show the test_field on the entity_test.entity_test.foobar view display.
     EntityViewDisplay::load('entity_test.entity_test.foobar')->setComponent('test_field', ['type' => 'string', 'label' => 'above'])->save();
 

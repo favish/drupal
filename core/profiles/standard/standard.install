@@ -5,7 +5,6 @@
  * Install, update and uninstall functions for the standard installation profile.
  */
 
-use Drupal\user\Entity\User;
 use Drupal\user\RoleInterface;
 use Drupal\shortcut\Entity\Shortcut;
 
@@ -27,11 +26,6 @@ function standard_install() {
   // Enable default permissions for system roles.
   user_role_grant_permissions(RoleInterface::ANONYMOUS_ID, ['access comments']);
   user_role_grant_permissions(RoleInterface::AUTHENTICATED_ID, ['access comments', 'post comments', 'skip comment approval']);
-
-  // Assign user 1 the "administrator" role.
-  $user = User::load(1);
-  $user->roles[] = 'administrator';
-  $user->save();
 
   // We install some menu links, so we have to rebuild the router, to ensure the
   // menu links are valid.

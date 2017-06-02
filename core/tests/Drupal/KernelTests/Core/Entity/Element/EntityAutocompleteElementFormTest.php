@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\entity_test\Entity\EntityTest;
 use Drupal\entity_test\Entity\EntityTestStringId;
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
+use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 
 /**
@@ -50,9 +51,15 @@ class EntityAutocompleteElementFormTest extends EntityKernelTestBase implements 
     $this->installEntitySchema('entity_test_string_id');
     \Drupal::service('router.builder')->rebuild();
 
+    Role::create([
+      'id' => 'test_role',
+      'label' => 'Can view test entities',
+      'permissions' => ['view test entity'],
+    ])->save();
     $this->testUser = User::create([
       'name' => 'foobar1',
       'mail' => 'foobar1@example.com',
+      'roles' => ['test_role'],
     ]);
     $this->testUser->save();
     \Drupal::service('current_user')->setAccount($this->testUser);

@@ -5,6 +5,7 @@ namespace Drupal\Core\Session;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Site\Settings;
 
 /**
@@ -34,6 +35,13 @@ class PermissionsHashGenerator implements PermissionsHashGeneratorInterface {
   protected $static;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * Constructs a PermissionsHashGenerator object.
    *
    * @param \Drupal\Core\PrivateKey $private_key
@@ -42,11 +50,14 @@ class PermissionsHashGenerator implements PermissionsHashGeneratorInterface {
    *   The cache backend interface to use for the persistent cache.
    * @param \Drupal\Core\Cache\CacheBackendInterface $static
    *   The cache backend interface to use for the static cache.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager used to retrieve a storage handler from.
    */
-  public function __construct(PrivateKey $private_key, CacheBackendInterface $cache, CacheBackendInterface $static) {
+  public function __construct(PrivateKey $private_key, CacheBackendInterface $cache, CacheBackendInterface $static, EntityTypeManagerInterface $entity_type_manager) {
     $this->privateKey = $private_key;
     $this->cache = $cache;
     $this->static = $static;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -55,10 +66,14 @@ class PermissionsHashGenerator implements PermissionsHashGeneratorInterface {
    * Cached by role, invalidated whenever permissions change.
    */
   public function generate(AccountInterface $account) {
-    // User 1 is the super user, and can always access all permissions. Use a
-    // different, unique identifier for the hash.
-    if ($account->id() == 1) {
-      return $this->hash('is-super-user');
+    // Admin roles can always access all permissions. Use a different, unique
+    // identifier for the hash.
+    $storage = $this->entityTypeManager->getStorage('user_role');
+    foreach ($storage->loadMultiple($account->getRoles()) as $role) {
+      /** @var \Drupal\user\RoleInterface $role */
+      if ($role->isAdmin()) {
+        return $this->hash('is-super-user');
+      }
     }
 
     $sorted_roles = $account->getRoles();

@@ -23,6 +23,11 @@ interface AccountInterface {
   const AUTHENTICATED_ROLE = 'authenticated';
 
   /**
+   * Role ID for the administrator users.
+   */
+  const ADMINISTRATOR_ROLE = 'administrator';
+
+  /**
    * Returns the user ID or 0 for anonymous.
    *
    * @return int

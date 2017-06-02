@@ -66,6 +66,7 @@ class FieldFieldTest extends ViewsKernelTestBase {
     // First setup the needed entity types before installing the views.
     parent::setUp(FALSE);
 
+    $this->installConfig('user');
     $this->installEntitySchema('user');
     $this->installEntitySchema('entity_test');
     $this->installEntitySchema('entity_test_rev');
@@ -73,7 +74,7 @@ class FieldFieldTest extends ViewsKernelTestBase {
     ViewTestData::createTestViews(get_class($this), ['views_test_config']);
 
     // Bypass any field access.
-    $this->adminUser = User::create(['name' => $this->randomString()]);
+    $this->adminUser = User::create(['name' => $this->randomString(), 'roles' => ['administrator']]);
     $this->adminUser->save();
     $this->container->get('current_user')->setAccount($this->adminUser);
 

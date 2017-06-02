@@ -34,8 +34,10 @@ class CommentDefaultFormatterCacheTagsTest extends EntityKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $session = new Session();
+    $this->container->get('module_handler')->loadInclude('comment', 'install');
+    comment_install();
 
+    $session = new Session();
     $request = Request::create('/');
     $request->setSession($session);
 
@@ -48,7 +50,7 @@ class CommentDefaultFormatterCacheTagsTest extends EntityKernelTestBase {
     // user does not have access to the 'administer comments' permission, to
     // ensure only published comments are visible to the end user.
     $current_user = $this->container->get('current_user');
-    $current_user->setAccount($this->createUser([], ['access comments']));
+    $current_user->setAccount($this->createUser([], ['access comments', 'post comments']));
 
     // Install tables and config needed to render comments.
     $this->installSchema('comment', ['comment_entity_statistics']);
@@ -66,6 +68,14 @@ class CommentDefaultFormatterCacheTagsTest extends EntityKernelTestBase {
    * Tests the bubbling of cache tags.
    */
   public function testCacheTags() {
+    $entity_type_manager = $this->container->get('entity_type.manager');
+
+    /** @var \Drupal\Core\Entity\EntityViewBuilderInterface $view_builder */
+    $view_builder = $entity_type_manager->getViewBuilder('entity_test');
+
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    $storage = $entity_type_manager->getStorage('entity_test');
+
     /** @var \Drupal\Core\Render\RendererInterface $renderer */
     $renderer = $this->container->get('renderer');
 
@@ -74,18 +84,16 @@ class CommentDefaultFormatterCacheTagsTest extends EntityKernelTestBase {
     $commented_entity->save();
 
     // Verify cache tags on the rendered entity before it has comments.
-    $build = \Drupal::entityManager()
-      ->getViewBuilder('entity_test')
-      ->view($commented_entity);
+    $build = $view_builder->view($commented_entity);
     $renderer->renderRoot($build);
     $expected_cache_tags = [
-      'entity_test_view',
-      'entity_test:' . $commented_entity->id(),
       'config:core.entity_form_display.comment.comment.default',
       'config:field.field.comment.comment.comment_body',
       'config:field.field.entity_test.entity_test.comment',
       'config:field.storage.comment.comment_body',
       'config:user.settings',
+      'entity_test_view',
+      'entity_test:' . $commented_entity->id(),
     ];
     sort($expected_cache_tags);
     $this->assertEqual($build['#cache']['tags'], $expected_cache_tags);
@@ -109,17 +117,11 @@ class CommentDefaultFormatterCacheTagsTest extends EntityKernelTestBase {
     ]);
     $comment->save();
 
-    // Load commented entity so comment_count gets computed.
-    // @todo Remove the $reset = TRUE parameter after
-    //   https://www.drupal.org/node/597236 lands. It's a temporary work-around.
-    $storage = $this->container->get('entity_type.manager')->getStorage('entity_test');
-    $storage->resetCache([$commented_entity->id()]);
+    // Load commented entity again so we get the updated comment_count.
     $commented_entity = $storage->load($commented_entity->id());
 
     // Verify cache tags on the rendered entity when it has comments.
-    $build = \Drupal::entityManager()
-      ->getViewBuilder('entity_test')
-      ->view($commented_entity);
+    $build = $view_builder->view($commented_entity);
     $renderer->renderRoot($build);
     $expected_cache_tags = [
       'entity_test_view',
@@ -142,9 +144,7 @@ class CommentDefaultFormatterCacheTagsTest extends EntityKernelTestBase {
     // builder elements bubble up outside of the entity and we can check that
     // it got the correct cache max age.
     $build = ['#type' => 'container'];
-    $build['entity'] = \Drupal::entityManager()
-      ->getViewBuilder('entity_test')
-      ->view($commented_entity);
+    $build['entity'] = $view_builder->view($commented_entity);
     $renderer->renderRoot($build);
 
     // The entity itself was cached but the top-level element is max-age 0 due

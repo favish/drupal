@@ -47,6 +47,7 @@ class FilterDefaultConfigTest extends KernelTestBase {
     $this->assertEqual(array_keys(filter_get_roles_by_format($format)), [
       RoleInterface::ANONYMOUS_ID,
       RoleInterface::AUTHENTICATED_ID,
+      RoleInterface::ADMINISTRATOR_ID,
     ]);
 
     // Verify enabled filters.
@@ -76,6 +77,7 @@ class FilterDefaultConfigTest extends KernelTestBase {
     $this->assertEqual(array_keys(filter_get_roles_by_format($format)), [
       RoleInterface::ANONYMOUS_ID,
       RoleInterface::AUTHENTICATED_ID,
+      RoleInterface::ADMINISTRATOR_ID,
     ]);
 
     // Attempt to change roles.
@@ -89,6 +91,7 @@ class FilterDefaultConfigTest extends KernelTestBase {
     $this->assertEqual(array_keys(filter_get_roles_by_format($format)), [
       RoleInterface::ANONYMOUS_ID,
       RoleInterface::AUTHENTICATED_ID,
+      RoleInterface::ADMINISTRATOR_ID,
     ]);
   }
 

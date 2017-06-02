@@ -63,6 +63,8 @@ abstract class CommentViewsKernelTestBase extends ViewsKernelTestBase {
 
     $admin_role = Role::create(['id' => 'admin']);
     $admin_role->grantPermission('administer comments');
+    $admin_role->grantPermission('access comments');
+    $admin_role->grantPermission('post comments');
     $admin_role->save();
 
     /* @var \Drupal\user\RoleInterface $anonymous_role */

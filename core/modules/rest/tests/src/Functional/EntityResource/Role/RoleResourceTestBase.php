@@ -48,7 +48,7 @@ abstract class RoleResourceTestBase extends EntityResourceTestBase {
   protected function getExpectedNormalizedEntity() {
     return [
       'uuid' => $this->entity->uuid(),
-      'weight' => 2,
+      'weight' => 3,
       'langcode' => 'en',
       'status' => TRUE,
       'dependencies' => [],

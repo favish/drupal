@@ -32,7 +32,7 @@ abstract class FileManagedUnitTestBase extends KernelTestBase {
 
     // Make sure that a user with uid 1 exists, self::createFile() relies on
     // it.
-    $user = User::create(['uid' => 1, 'name' => $this->randomMachineName()]);
+    $user = User::create(['uid' => 1, 'status' => 1, 'name' => $this->randomMachineName()]);
     $user->enforceIsNew();
     $user->save();
     \Drupal::currentUser()->setAccount($user);
